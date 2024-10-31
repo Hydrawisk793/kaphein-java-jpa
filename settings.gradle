@@ -1,0 +1,4 @@
+rootProject.name = 'kaphein-java-jpa'
+
+include 'kaphein-java-jpa-core'
+include 'kaphein-java-jpa-mql'

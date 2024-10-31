@@ -1,0 +1,9 @@
+ext {
+    PUBLISH_GROUP_ID = 'io.github.hydrawisk793'
+    PUBLISH_DEVELOPER_ID = 'hyw793'
+    PUBLISH_DEVELOPER_NAME = 'Hydrawisk793'
+    PUBLISH_DEVELOPER_EMAIL = 'hyw793@gmail.com'
+    PUBLISH_SCM_CONNECTION = 'scm:git:github.com/Hydrawisk793/kaphein-java-jpa.git'
+    PUBLISH_SCM_DEVELOPER_CONNECTION = 'scm:git:ssh://github.com/Hydrawisk793/kaphein-java-jpa.git'
+    PUBLISH_SCM_URL = 'https://github.com/Hydrawisk793/kaphein-java-jpa'
+}
