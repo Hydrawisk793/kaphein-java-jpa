@@ -50,7 +50,7 @@ class MqlSubQueryContext
     this.alias = alias;
 
     final var queryNode = subQueryRootNode.getChildNodeAt(2);
-    if(!"query".equals(queryNode.getLabel()))
+    if(!"jpqlWhere".equals(queryNode.getLabel()))
     {
       throw new MqlSyntaxException("query must be specified");
     }

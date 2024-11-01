@@ -226,8 +226,8 @@ public class MqlQueryBuilder<E>
       case CLAUSE:
         switch(node.getLabel())
         {
-        case "nSqlExists":
-        case "sqlExists":
+        case "nJpqlExists":
+        case "jpqlExists":
         {
           final var subQueryContext = new MqlSubQueryContext(
             queryBuilderCtxt,
@@ -258,8 +258,8 @@ public class MqlQueryBuilder<E>
       {
         if(
           MqlAstNode.Kind.CLAUSE.equals(currentNode.getKind())
-            && ("sqlExists".equals(currentNode.getLabel())
-              || ("nSqlExists".equals(currentNode.getLabel())))
+            && ("jpqlExists".equals(currentNode.getLabel())
+              || ("nJpqlExists".equals(currentNode.getLabel())))
         )
         {
           parentSubQueryRootNode = currentNode;
@@ -315,8 +315,8 @@ public class MqlQueryBuilder<E>
             }
           }
             break;
-          case "nSqlExists":
-          case "sqlExists":
+          case "nJpqlExists":
+          case "jpqlExists":
             // Does nothing.
             break;
           case "and":
@@ -355,7 +355,7 @@ public class MqlQueryBuilder<E>
               final var parent = node.getParent();
               final var isRootCondition = null != parent
                 && MqlAstNode.Kind.TERM.equals(parent.getKind())
-                && "query".equals(parent.getLabel());
+                && "jpqlWhere".equals(parent.getLabel());
               if(!isRootCondition)
               {
                 jpqlExpr = String.format("(%s)", jpqlExpr);

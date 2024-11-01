@@ -135,7 +135,7 @@ final var queryBuildResult = new MqlQueryBuilder<User>()
     {
       "$entityName" : "User",
       "$alias" : "u",
-      "$query" : {
+      "$jpqlWhere" : {
         "u.userName" : { "$like" : "%foo%" }
       }
     }
@@ -177,12 +177,12 @@ Use `$attrPath` to specify a path to JPA entity attribute on the right hand side
 {
   "$entityName" : "Department",
   "$alias" : "d",
-  "$query" : {
+  "$jpqlWhere" : {
     "d.departmentName" : { "$like" : "%foo%" },
-    "$sqlExists" : {
+    "$jpqlExists" : {
         "$entityName" : "User",
         "$alias" : "u",
-        "$query" : {
+        "$jpqlWhere" : {
           "u.departmentId" : { "$eq" : { "$attrPath" : "d.id" } },
           "u.age" : { "$gte" : 20 }
         }
@@ -191,7 +191,7 @@ Use `$attrPath` to specify a path to JPA entity attribute on the right hand side
 }
 ```
 
-`$like` and `$nlike` operators are supported. These operators are similar to `LIKE` operator in the SQL of relational databases.  
+`$like` and `$nlike` operators are supported. These operators are similar to `LIKE` operator in JPQL.  
 Set `$caseSensitive` to `false` for case-insensitive string matching.  
 Specify `$escape` to change the escape character.
 
@@ -199,7 +199,7 @@ Specify `$escape` to change the escape character.
 {
   "$entityName" : "User",
   "$alias" : "u",
-  "$query" : {
+  "$jpqlWhere" : {
     "u.userName" : {
       "$like" : "%foo%",
       "$caseSensitive" : false,
@@ -213,20 +213,20 @@ Specify `$escape` to change the escape character.
 
 `$and` and `$or` are supported.
 
-### `SqlExists` operator
+### `JpqlExists` operator
 
-`$sqlExists` and `$nSqlExists` are different to the `$exists` operator in the MongoDB query language, but similar to `EXISTS` operator in the SQL of relational databases.
+`$jpqlExists` and `$nJpqlExists` are different to the `$exists` operator in the MongoDB query language, but similar to `EXISTS` operator in JPQL.
 
 ```JSON
 {
   "$entityName" : "Department",
   "$alias" : "d",
-  "$query" : {
+  "$jpqlWhere" : {
     "d.departmentName" : { "$like" : "%foo%" },
-    "$sqlExists" : {
+    "$jpqlExists" : {
         "$entityName" : "User",
         "$alias" : "u",
-        "$query" : {
+        "$jpqlWhere" : {
           "u.departmentId" : { "$eq" : { "$attrPath" : "d.id" } },
           "u.age" : { "$gte" : 20 }
         }

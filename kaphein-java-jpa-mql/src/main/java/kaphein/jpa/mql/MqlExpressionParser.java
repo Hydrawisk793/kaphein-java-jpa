@@ -140,7 +140,7 @@ class MqlExpressionParser implements Iterable<MqlExpressionParseResult>
         MqlExpressionContext.Kind.CLAUSE,
         null,
         rootNode,
-        "sqlExists",
+        "jpqlExists",
         rootExpr));
 
       state = State.PROCESS_EXPRESSION;
@@ -189,8 +189,8 @@ class MqlExpressionParser implements Iterable<MqlExpressionParseResult>
               case "comment":
               case "and":
               case "or":
-              case "nSqlExists":
-              case "sqlExists":
+              case "nJpqlExists":
+              case "jpqlExists":
                 isClause = true;
                 break;
               default:
@@ -299,8 +299,8 @@ class MqlExpressionParser implements Iterable<MqlExpressionParseResult>
           castToExpression(mapTerm)));
       }
       break;
-    case "sqlExists":
-    case "nSqlExists":
+    case "jpqlExists":
+    case "nJpqlExists":
     {
       if(!(value instanceof Map<?, ?>))
       {
@@ -326,13 +326,13 @@ class MqlExpressionParser implements Iterable<MqlExpressionParseResult>
       final var aliasNode = nodeRegistry.create(MqlAstNode.Kind.TERM, "alias", alias);
       clauseNode.addChild(aliasNode);
 
-      final var queryTerm = mapTerm.get("$query");
+      final var queryTerm = mapTerm.get("$jpqlWhere");
       if(!(queryTerm instanceof Map<?, ?>))
       {
-        throw new MqlSyntaxException(String.format("%s of %s clause must be an expression.", "$query", clauseName));
+        throw new MqlSyntaxException(String.format("%s of %s clause must be an expression.", "$jpqlWhere", clauseName));
       }
       final var query = (Map<?, ?>)queryTerm;
-      final var queryNode = nodeRegistry.create(MqlAstNode.Kind.TERM, "query");
+      final var queryNode = nodeRegistry.create(MqlAstNode.Kind.TERM, "jpqlWhere");
       clauseNode.addChild(queryNode);
 
       final var andClauseNode = nodeRegistry.create(MqlAstNode.Kind.CLAUSE, "and");
