@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Spliterator;
 import java.util.Spliterators;
+import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 import org.slf4j.Logger;
@@ -22,6 +23,8 @@ import kaphein.jpa.core.AssertArg;
 import kaphein.jpa.core.JpaEntityAttributePath;
 import kaphein.jpa.core.MetamodelUtils;
 import kaphein.jpa.core.Sort;
+import kaphein.jpa.core.Sort.NullOrder;
+import kaphein.jpa.core.StringUtils;
 
 public class MqlQueryBuilder<E>
 {
@@ -792,9 +795,16 @@ public class MqlQueryBuilder<E>
     final var jpqlFromClause = queryNode.getJpqlExpression();
     logger.debug("jpqlFromClause == {}", jpqlFromClause);
 
+    final var jpqlOrderByClause = buildOrderByClause();
+    logger.debug("jpqlOrderByClause == {}", jpqlOrderByClause);
+
     final var itemQuery = em
       .createQuery(
-        String.format("SELECT %s %s", entityAlias, jpqlFromClause),
+        String.format(
+          "SELECT %s %s%s",
+          entityAlias,
+          jpqlFromClause,
+          (StringUtils.isNotBlank(jpqlOrderByClause) ? " " + jpqlOrderByClause : "")),
         entityType.getJavaType())
       .setMaxResults(limit)
       .setFirstResult(offset);
@@ -814,6 +824,47 @@ public class MqlQueryBuilder<E>
     return new MqlQueryBuildResult<>(
       itemQuery,
       countQuery);
+  }
+
+  private String buildOrderByClause()
+  {
+    var expr = "";
+
+    final var termExprs = new LinkedList<String>();
+    for(final var term : orderByTerms)
+    {
+      final var attrPath = term.getPath();
+      final var path = String.format("%s", attrPath);
+      final var direction = (term.isDescending() ? "DESC" : "ASC");
+      var termExpr = String.format("%s %s", path, direction);
+
+      final var nullOrder = Optional
+        .ofNullable(term.getNullOrder())
+        .orElse(NullOrder.DEFAULT);
+      switch(nullOrder)
+      {
+      case DEFAULT:
+        // Does nothing.
+        break;
+      case FIRST:
+        termExpr = String.format("(CASE WHEN %s IS NULL THEN 0 ELSE 1 END) " + "ASC, ", path) + termExpr;
+        break;
+      case LAST:
+        termExpr = String.format("(CASE WHEN %s IS NULL THEN 0 ELSE 1 END) " + "DESC, ", path) + termExpr;
+        break;
+      default:
+        throw new MqlException(String.format("NullOrder %s is not supported", nullOrder.name()));
+      }
+
+      termExprs.add(termExpr);
+    }
+
+    if(!termExprs.isEmpty())
+    {
+      expr = termExprs.stream().collect(Collectors.joining(", "));
+    }
+
+    return (expr.isBlank() ? "" : "ORDER BY " + expr);
   }
 
   private Logger logger;
