@@ -791,9 +791,13 @@ public class MqlQueryBuilder<E>
     final var queryNode = rootNode.getChildNodeAt(0);
     final var jpqlFromClause = queryNode.getJpqlExpression();
     logger.debug("jpqlFromClause == {}", jpqlFromClause);
-    final var itemQuery = em.createQuery(
-      String.format("SELECT %s %s", entityAlias, jpqlFromClause),
-      entityType.getJavaType());
+
+    final var itemQuery = em
+      .createQuery(
+        String.format("SELECT %s %s", entityAlias, jpqlFromClause),
+        entityType.getJavaType())
+      .setMaxResults(limit)
+      .setFirstResult(offset);
     final var countQuery = em.createQuery(
       String.format("SELECT COUNT(*) %s", jpqlFromClause),
       Long.class);
