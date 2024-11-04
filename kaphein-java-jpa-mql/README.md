@@ -209,6 +209,28 @@ Specify `$escape` to change the escape character.
 }
 ```
 
+Use `$isNull` operator for `NULL` test.  
+Set the operand to `false` for `IS NOT NULL` syntax.
+
+```JSON
+{
+  "$entityName" : "User",
+  "$alias" : "u",
+  "$jpqlWhere" : {
+    "u.userName" : { "$isNull" : true }
+  }
+}
+```
+```JSON
+{
+  "$entityName" : "User",
+  "$alias" : "u",
+  "$jpqlWhere" : {
+    "u.userName" : { "$isNull" : false }
+  }
+}
+```
+
 ### Logical operators
 
 `$and` and `$or` are supported.
