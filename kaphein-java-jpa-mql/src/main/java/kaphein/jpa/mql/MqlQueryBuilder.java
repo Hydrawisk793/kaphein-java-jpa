@@ -1,8 +1,10 @@
 package kaphein.jpa.mql;
 
+import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -15,6 +17,7 @@ import java.util.stream.StreamSupport;
 import org.slf4j.Logger;
 import org.slf4j.helpers.NOPLogger;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import jakarta.persistence.EntityManager;
@@ -46,6 +49,7 @@ public class MqlQueryBuilder<E>
     entityAlias = src.entityAlias;
     objectMapper = src.objectMapper;
     mapFilter = src.mapFilter;
+    filterJson = src.filterJson;
   }
 
   public MqlQueryBuilder<E> logger(Logger logger)
@@ -81,6 +85,13 @@ public class MqlQueryBuilder<E>
   public MqlQueryBuilder<E> objectMapper(ObjectMapper objectMapper)
   {
     this.objectMapper = objectMapper;
+
+    return this;
+  }
+
+  public MqlQueryBuilder<E> filter(String filter)
+  {
+    filterJson = filter;
 
     return this;
   }
@@ -188,7 +199,35 @@ public class MqlQueryBuilder<E>
   {
     if(null == mapFilter)
     {
-      throw new IllegalArgumentException("filter is not set.");
+      if(StringUtils.isBlank(filterJson))
+      {
+        throw new IllegalArgumentException("filter is not set.");
+      }
+      else
+      {
+        try
+        {
+          mapFilter = ((Map<?, ?>)objectMapper
+            .readValue(
+              filterJson,
+              Map.class))
+            .entrySet()
+            .stream()
+            .filter(entry -> String.class.isInstance(entry.getKey()))
+            .map(entry -> new AbstractMap.SimpleImmutableEntry<>(
+              String.class.cast(entry.getKey()),
+              Object.class.cast(entry.getValue())))
+            .collect(Collectors.toMap(
+              Map.Entry::getKey,
+              Map.Entry::getValue,
+              (l, r) -> r,
+              LinkedHashMap::new));
+        }
+        catch(final JsonProcessingException jpe)
+        {
+          throw new MqlException(jpe.getMessage());
+        }
+      }
     }
   }
 
@@ -880,6 +919,8 @@ public class MqlQueryBuilder<E>
   private ObjectMapper objectMapper;
 
   private Map<String, Object> mapFilter;
+
+  private String filterJson;
 
   private List<Sort.Order> orderByTerms;
 
