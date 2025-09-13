@@ -42,7 +42,7 @@ public class MqlQueryBuilder<E>
   {
     AssertArg.isNotNull(src, "src");
 
-    logger = src.logger;
+    logger(src.logger);
     em = src.em;
     entityType = src.entityType;
     entityJavaType = src.entityJavaType;
