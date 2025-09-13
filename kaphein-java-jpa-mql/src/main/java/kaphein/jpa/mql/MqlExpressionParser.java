@@ -1,20 +1,13 @@
 package kaphein.jpa.mql;
 
-import java.util.AbstractMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonMappingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import kaphein.jpa.core.JpaEntityAttributePath;
 import kaphein.jpa.core.NotImplementedException;
@@ -29,40 +22,10 @@ class MqlExpressionParser implements Iterable<MqlExpressionParseResult>
   }
 
   public MqlExpressionParser(
-    ObjectMapper objectMapper,
-    String expression,
-    String entityName
-  )
-    throws JsonMappingException, JsonProcessingException
-  {
-    this.objectMapper = objectMapper;
-
-    inputExpression = ((Map<?, ?>)this.objectMapper.readValue(expression, Map.class))
-      .entrySet()
-      .stream()
-      .filter(entry -> String.class.isInstance(entry.getKey()))
-      .map(entry -> new AbstractMap.SimpleImmutableEntry<>(
-        String.class.cast(entry.getKey()),
-        Object.class.cast(entry.getValue())))
-      .collect(Collectors.toMap(
-        Map.Entry::getKey,
-        Map.Entry::getValue,
-        (l, r) -> r,
-        LinkedHashMap::new));
-    inputEntityName = entityName;
-
-    exprCtxStack = new LinkedList<>();
-    state = 0;
-  }
-
-  public MqlExpressionParser(
-    ObjectMapper objectMapper,
     Map<String, Object> expression,
     String entityName
   )
   {
-    this.objectMapper = objectMapper;
-
     inputExpression = expression;
     inputEntityName = entityName;
 
@@ -154,81 +117,11 @@ class MqlExpressionParser implements Iterable<MqlExpressionParseResult>
       else
       {
         final var exprCtx = exprCtxStack.pop();
-        final var currentNode = exprCtx.getCurrentNode();
-
         switch(exprCtx.getKind())
         {
         case CONDITION_TERMS:
-        {
-          final var exprEntries = new LinkedList<Map.Entry<String, Object>>();
-          for(final var exprEntry : exprCtx.getExpression().entrySet())
-          {
-            exprEntries.push(exprEntry);
-          }
-
-          while(!exprEntries.isEmpty())
-          {
-            final var exprEntry = exprEntries.pop();
-            final var key = exprEntry.getKey();
-            if(null == key || key.isBlank())
-            {
-              throw new MqlSyntaxException("A key of an expression cannot be null or blank");
-            }
-
-            final var value = exprEntry.getValue();
-
-            final var isSpecialName = isOperatorName(key);
-            final var specialName = (isSpecialName ? key.substring(1) : null);
-            LOGGER.debug("specialName == {}", specialName);
-
-            var isClause = null != specialName && !specialName.isBlank();
-            if(isClause)
-            {
-              switch(specialName)
-              {
-              case "comment":
-              case "and":
-              case "or":
-              case "nJpqlExists":
-              case "jpqlExists":
-                isClause = true;
-                break;
-              default:
-                isClause = false;
-              }
-            }
-
-            if(isClause)
-            {
-              exprCtxStack.push(new MqlExpressionContext(
-                MqlExpressionContext.Kind.CLAUSE,
-                exprCtx,
-                currentNode,
-                specialName,
-                value));
-            }
-            else if((value instanceof Map<?, ?>))
-            {
-              final var mapValue = (Map<?, ?>)value;
-              exprCtxStack.push(new MqlExpressionContext(
-                MqlExpressionContext.Kind.VALUE_OPERATOR,
-                exprCtx,
-                currentNode,
-                key,
-                castToExpression(mapValue)));
-            }
-            else
-            {
-              exprCtxStack.push(new MqlExpressionContext(
-                MqlExpressionContext.Kind.VALUE_OPERATOR,
-                exprCtx,
-                currentNode,
-                key,
-                MqlExpressions.of("$eq", value)));
-            }
-          }
+          processConditionTerms(exprCtx);
           break;
-        }
         case CLAUSE:
           processClause(exprCtx);
           break;
@@ -250,6 +143,78 @@ class MqlExpressionParser implements Iterable<MqlExpressionParseResult>
     return new MqlExpressionParseResult(
       State.ENDED == state,
       rootNode);
+  }
+
+  private void processConditionTerms(MqlExpressionContext exprCtx)
+  {
+    final var exprEntries = new LinkedList<Map.Entry<String, Object>>();
+    for(final var exprEntry : exprCtx.getExpression().entrySet())
+    {
+      exprEntries.push(exprEntry);
+    }
+
+    while(!exprEntries.isEmpty())
+    {
+      final var currentNode = exprCtx.getCurrentNode();
+      final var exprEntry = exprEntries.pop();
+      final var key = exprEntry.getKey();
+      if(null == key || key.isBlank())
+      {
+        throw new MqlSyntaxException("A key of an expression cannot be null or blank");
+      }
+
+      final var value = exprEntry.getValue();
+
+      final var isSpecialName = isOperatorName(key);
+      final var specialName = (isSpecialName ? key.substring(1) : null);
+      LOGGER.debug("specialName == {}", specialName);
+
+      var isClause = null != specialName && !specialName.isBlank();
+      if(isClause)
+      {
+        switch(specialName)
+        {
+        case "comment":
+        case "and":
+        case "or":
+        case "nJpqlExists":
+        case "jpqlExists":
+          isClause = true;
+          break;
+        default:
+          isClause = false;
+        }
+      }
+
+      if(isClause)
+      {
+        exprCtxStack.push(new MqlExpressionContext(
+          MqlExpressionContext.Kind.CLAUSE,
+          exprCtx,
+          currentNode,
+          specialName,
+          value));
+      }
+      else if((value instanceof Map<?, ?>))
+      {
+        final var mapValue = (Map<?, ?>)value;
+        exprCtxStack.push(new MqlExpressionContext(
+          MqlExpressionContext.Kind.VALUE_OPERATOR,
+          exprCtx,
+          currentNode,
+          key,
+          castToExpression(mapValue)));
+      }
+      else
+      {
+        exprCtxStack.push(new MqlExpressionContext(
+          MqlExpressionContext.Kind.VALUE_OPERATOR,
+          exprCtx,
+          currentNode,
+          key,
+          MqlExpressions.of("$eq", value)));
+      }
+    }
   }
 
   private void processClause(MqlExpressionContext exprCtx)
@@ -637,8 +602,6 @@ class MqlExpressionParser implements Iterable<MqlExpressionParseResult>
     final var currentNode = exprCtx.getCurrentNode();
     currentNode.addChild(opNode);
   }
-
-  private final ObjectMapper objectMapper;
 
   private final Map<String, Object> inputExpression;
 
