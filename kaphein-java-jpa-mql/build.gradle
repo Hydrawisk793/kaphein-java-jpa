@@ -15,20 +15,20 @@ java {
 }
 
 repositories {
-  mavenCentral()
   mavenLocal()
+  mavenCentral()
 }
 
 dependencies {
   compileOnly project(':kaphein-java-jpa-core')
   testImplementation project(':kaphein-java-jpa-core')
 
-  compileOnly 'org.slf4j:slf4j-api:[2.0.0,)'
+  compileOnly 'org.slf4j:slf4j-api:2.0.0'
   testImplementation 'org.slf4j:slf4j-api:2.0.13'
 
-  compileOnly 'jakarta.persistence:jakarta.persistence-api:[3.0.0,)'
-  testImplementation 'jakarta.persistence:jakarta.persistence-api:3.1.0'
+  compileOnly 'jakarta.persistence:jakarta.persistence-api:3.0.0'
+  testImplementation 'jakarta.persistence:jakarta.persistence-api:3.0.0'
 
-  compileOnly 'com.fasterxml.jackson.core:jackson-databind:[2.14.0,)'
+  compileOnly 'com.fasterxml.jackson.core:jackson-databind:2.14.0'
   testImplementation 'com.fasterxml.jackson.core:jackson-databind:2.14.3'
 }
