@@ -1,13 +1,78 @@
 buildscript {
-  dependencies {
-    classpath 'com.vanniktech:gradle-maven-publish-plugin:0.30.0'
-  }
-
   repositories {
     mavenLocal()
     mavenCentral()
   }
+
+  dependencies {
+    classpath 'com.vanniktech:gradle-maven-publish-plugin:0.34.0'
+  }
 }
 
-apply plugin: 'com.vanniktech.maven.publish'
-apply from: 'publish.gradle'
+subprojects { subproject ->
+  def isTestDriver = subproject.name.endsWith("-test")
+
+  if(!isTestDriver) {
+    apply from: "${subproject.rootDir}/publish.gradle"
+
+    group = ext['PUBLISH_GROUP_ID']
+  }
+
+  if(subproject.name.startsWith("kaphein-java-")) {
+    if(!isTestDriver) {
+      apply from: "${subproject.projectDir}/publish.gradle"
+
+      version = ext['PUBLISH_VERSION']
+    }
+
+    repositories {
+      mavenLocal()
+      mavenCentral()
+    }
+  }
+
+  // see: https://discuss.gradle.org/t/need-a-gradle-task-to-copy-all-dependencies-to-a-local-maven-repo/13397/15
+  task cacheToMavenLocal(type: Copy) {
+    from {
+      final def cacheDirs = []
+
+      final def gradleCacheDir = java.nio.file.Path.of(gradle.gradleUserHomeDir.toString(), 'caches')
+      final def pathMatcher = java.nio.file.FileSystems
+        .getDefault()
+        .getPathMatcher('glob:' + gradleCacheDir.toString().replaceAll('\\\\', '/') + "/modules-*/files-*")
+      java.nio.file.Files.walk(gradleCacheDir).withCloseable { dirPaths ->
+        dirPaths
+          .filter({ dirPath -> pathMatcher.matches(dirPath) })
+          .forEach({ dirPath -> cacheDirs.add(dirPath.toFile()) })
+      }
+
+      return cacheDirs
+    }
+
+    into {
+      def mavenLocalRepoDir
+
+      final def mavenLocal = repositories.mavenLocal()
+      if ('file' == mavenLocal.url.scheme) {
+        mavenLocalRepoDir = new File(mavenLocal.url.path)
+      } else {
+        mavenLocalRepoDir = new File(System.getProperty('user.home'), '.m2/repository')
+      }
+
+      return mavenLocalRepoDir
+    }
+
+    eachFile {
+      final def parts = it.path.split('/')
+      if (parts.length > 4) {
+        final def oldPath = it.path
+        it.path = String.join('/', parts[0].replace('.', '/'), parts[1], parts[2], parts[4])
+      } else {
+        it.exclude()
+      }
+    }
+
+    includeEmptyDirs false
+    duplicatesStrategy DuplicatesStrategy.INCLUDE
+  }
+}

@@ -1,8 +1,8 @@
 ext {
-    PUBLISH_ARTIFACT_ID = 'kaphein-java-jpa-core'
-    PUBLISH_VERSION = '0.1.1'
-    PUBLISH_DESCRIPTION = 'The core module for kaphein-java-jpa.'
-    PUBLISH_URL = 'https://github.com/Hydrawisk793/kaphein-java-jpa/kaphein-java-jpa-core'
-    PUBLISH_LICENSE_NAME = 'MIT License'
-    PUBLISH_LICENSE_URL = 'https://github.com/Hydrawisk793/kaphein-java-jpa/kaphein-java-jpa-core/blob/master/LICENSE'
+  PUBLISH_ARTIFACT_ID = 'kaphein-java-jpa-core'
+  PUBLISH_VERSION = '0.1.1'
+  PUBLISH_DESCRIPTION = 'The core module for kaphein-java-jpa.'
+  PUBLISH_URL = 'https://github.com/Hydrawisk793/kaphein-java-jpa/kaphein-java-jpa-core'
+  PUBLISH_LICENSE_NAME = 'MIT License'
+  PUBLISH_LICENSE_URL = 'https://github.com/Hydrawisk793/kaphein-java-jpa/kaphein-java-jpa-core/blob/master/LICENSE'
 }

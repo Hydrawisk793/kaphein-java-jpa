@@ -1,27 +1,13 @@
-buildscript {
-  dependencies {
-    classpath 'com.vanniktech:gradle-maven-publish-plugin:0.30.0'
-  }
-
-  repositories {
-    mavenLocal()
-    mavenCentral()
-  }
-}
-
 apply from: "${project.rootDir}/publish.gradle"
+apply from: "${project.projectDir}/publish.gradle"
 apply plugin: 'com.vanniktech.maven.publish'
 apply plugin: 'signing'
-
-import com.vanniktech.maven.publish.SonatypeHost
-import com.vanniktech.maven.publish.JavaLibrary
-import com.vanniktech.maven.publish.JavadocJar
 
 group = PUBLISH_GROUP_ID
 version = PUBLISH_VERSION
 
 mavenPublishing {
-  publishToMavenCentral(SonatypeHost.CENTRAL_PORTAL)
+  publishToMavenCentral()
 
   signAllPublications()
 
@@ -31,33 +17,26 @@ mavenPublishing {
     name = PUBLISH_ARTIFACT_ID
     description = PUBLISH_DESCRIPTION
     url = PUBLISH_URL
-    licenses {
-        license {
-            name = PUBLISH_LICENSE_NAME
-            url = PUBLISH_LICENSE_URL
-        }
-    }
-    developers {
-        developer {
-            id = PUBLISH_DEVELOPER_ID
-            name = PUBLISH_DEVELOPER_NAME
-            email = PUBLISH_DEVELOPER_EMAIL
-        }
-    }
-    scm {
-        connection = PUBLISH_SCM_CONNECTION
-        developerConnection = PUBLISH_SCM_DEVELOPER_CONNECTION
-        url = PUBLISH_SCM_URL
-    }
-    withXml {
-        def dependencies = asNode().appendNode('dependencies')
 
-        project.configurations.implementation.allDependencies.each {
-            def dependencyNode = dependenciesNode.appendNode('dependency')
-            dependencyNode.appendNode('groupId', it.group)
-            dependencyNode.appendNode('artifactId', it.name)
-            dependencyNode.appendNode('version', it.version)
-        }
+    licenses {
+      license {
+        name = PUBLISH_LICENSE_NAME
+        url = PUBLISH_LICENSE_URL
+      }
+    }
+
+    developers {
+      developer {
+        id = PUBLISH_DEVELOPER_ID
+        name = PUBLISH_DEVELOPER_NAME
+        email = PUBLISH_DEVELOPER_EMAIL
+      }
+    }
+
+    scm {
+      connection = PUBLISH_SCM_CONNECTION
+      developerConnection = PUBLISH_SCM_DEVELOPER_CONNECTION
+      url = PUBLISH_SCM_URL
     }
   }
 }
